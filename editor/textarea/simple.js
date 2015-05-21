@@ -55,24 +55,13 @@ jaxedit.doChange = function(event) {
     newseltext   = newtextvalue.substring(newselstart,newselend);
   }
 
-  var omitted = false;
+  if ( ev.type == "mousemove" && document.activeElement.id != "codearea") { return; } // codearea unused
+  if ( ev.type == "mousemove" && oldselstart == newselstart && oldselend == newselend ) { return; } // codearea in use
+  if ( ev.type == "focus"){ return; } 
+  if ( ev.type == "mousedown" ){ return; }  // click to clear old selection
+  if ( ev.type == "mouseup" && newselstart == newselend) { return; } 
+  //if ( ev.type == "keydown" && ev.keyCode == 229 && agent.engine == "webkit"){    // todo: iuput method in chrome    // note: keydown event is also used when pressing a key for some time  }
 
-  if (ev.type == "mousemove" && document.activeElement.id != "codearea") { // codearea unused
-    omitted = true;
-  } else if ( ev.type == "mousemove" && oldselstart == newselstart && oldselend == newselend ) { // codearea in use
-    omitted = true;
-  } else if (ev.type == "focus"){
-    omitted = true;
-  } else if (ev.type == "mousedown"){ // click to clear old selection
-    omitted = true;
-  } else if (ev.type == "mouseup" && newselstart == newselend) {
-    omitted = true;
-  } else if (ev.type == "keydown" && ev.keyCode == 229 && agent.engine == "webkit"){
-    // todo: iuput method in chrome
-    // note: keydown event is also used when pressing a key for some time
-  }
-
-  if (omitted) return;
 
   var delstart = 0, delend = 0, /*delsize = 0,*/ deltext = "";
   var insstart = 0, insend = 0, /*inssize = 0,*/ instext = "";
@@ -125,16 +114,10 @@ jaxedit.doChange = function(event) {
   data.newselend    = newselend;
   data.newseltext   = newseltext;
 
-  if (window.localStorage) {
-    if (deltext != "" || instext != "") {
-      //IE8 sometimes crashes when writing empty value to a localStorage item
-      if (codearea.value != "") {
-        localStorage.setItem("texcode", codearea.value);
-      } else {
-        localStorage.removeItem("texcode");
-      }
-    }
-  }
+  if ((window.localStorage)&&(deltext != "" || instext != "")) { //IE8 sometimes crashes when writing empty value to a localStorage item
+     if (codearea.value != "") 	 { localStorage.setItem("texcode", codearea.value); } 
+							else { localStorage.removeItem("texcode"); }
+	}
 
   jaxedit.setScrollers(newtextsize, delstart, codearea.scrollTop);
   typejax.updater.putTask(delstart, delend, deltext, instext, newtextsize, showarea);
@@ -144,21 +127,10 @@ jaxedit.addEditor = function() {
   var codearea = this.childs.codearea;
 
   this.editor = {
-    getWrapperElement : function() {
-      return codearea;
-    },
-
-    getValue : function() {
-      return codearea.value;
-    },
-
-    setValue : function(value) {
-      codearea.value = value;
-    },
-
-    setReadOnly : function(bool) {
-      codearea.readOnly = bool;
-    },
+    getWrapperElement : function() { return codearea; },
+    getValue : function() { return codearea.value; },
+    setValue : function(value) { codearea.value = value; },
+    setReadOnly : function(bool) { codearea.readOnly = bool; },
 
     getScrollInfo : function() {
       return {
