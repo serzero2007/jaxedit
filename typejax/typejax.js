@@ -1218,6 +1218,8 @@ window.typejax = (function($){
             }
         }
       },
+	  
+	  //------------------------------------------------------------------------
       
       doEnvironment : function(node) {
         var name = node.name, same = this.getGroupSame(name);
@@ -1963,7 +1965,7 @@ window.typejax = (function($){
           name: "thmhead",
           mode: "inline",
           from: node.childs[0].from,
-          value: "<span>" + thmhead + " </span>",
+          value: "<span>"+thmhead+"</span>",
           parent: node.childs[0],
           childs: []
         };
@@ -2126,46 +2128,24 @@ window.typejax = (function($){
           }
         },
 
-        cmdHline: function() {
-          return;
+        cmdHline: function() { return; }, // Feanor: General code cleaning
+
+        cmdMaketitle: function(node) { // Feanor: General code cleaning
+          if (typeof this.cmdvalues["title"] == "undefined") return;  if (typeof this.cmdvalues["author"] == "undefined") {this.cmdvalues["author"] = "";}
+			var result = "<h1>" + this.cmdvalues["title"] + "</h1>" + "<div class='author'>" + this.cmdvalues["author"] + "</div>";
+          if (typeof this.cmdvalues["institute"] != "undefined") { result += "<div class='institute'>" + this.cmdvalues["institute"] + "</div>"; }
+          if (typeof this.cmdvalues["date"] == "undefined") 	 { result += "<div class='date'>" + (new Date()).toLocaleDateString() + "</div>";} 
+															else { result += "<div class='date'>" + this.cmdvalues["date"] + "</div>";		     }
+          if (node.name == "maketitle" && this.cmdvalues["documentclass"] == "beamer") {result = "<div class='envblock frame'>" + result + "</div>";}
+          node.childs = []; node.value = result;
         },
 
-        cmdMaketitle: function(node) {
-          if (typeof this.cmdvalues["title"] == "undefined") return;
-          var result = "<h1>" + this.cmdvalues["title"] + "</h1>";
-
-          if (typeof this.cmdvalues["author"] == "undefined") {
-            this.cmdvalues["author"] = "";
-          }
-          result += "<div class='author'>" + this.cmdvalues["author"] + "</div>";
-          if (typeof this.cmdvalues["institute"] != "undefined") {
-            result += "<div class='institute'>" + this.cmdvalues["institute"] + "</div>";
-          }
-          if (typeof this.cmdvalues["date"] == "undefined") {
-            result += "<div class='date'>" + (new Date()).toLocaleDateString() + "</div>";
-          } else {
-            result += "<div class='date'>" + this.cmdvalues["date"] + "</div>";
-          }
-
-          if (node.name == "maketitle" && this.cmdvalues["documentclass"] == "beamer") {
-            result = "<div class='envblock frame'>" + result + "</div>";
-          }
-
-          node.childs = [];
-          node.value = result;
+        cmdNewcounter: function(node) { // Feanor: General code cleaning
+          var parameters = this.readParameters(node), name = parameters[0], parent = parameters[1] || null;
+          if (name) {this.newCounter(name, parent);}
         },
 
-        cmdNewcounter: function(node) {
-          var parameters = this.readParameters(node),
-              name = parameters[0], parent = parameters[1] || null;
-          if (name) {
-            this.newCounter(name, parent);
-          }
-        },
-
-        cmdNewline: function() {
-          this.addText("<br>", this.place - 1);
-        },
+        cmdNewline: function() { this.addText("<br>", this.place - 1); },  // Feanor: General code cleaning
 
         cmdNewtheorem: function(node) {
           // \newtheorem{envname}{thmname}[numberby]
@@ -2227,11 +2207,8 @@ window.typejax = (function($){
         },
 
         cmdQuad: function() {
-          if (this.mathenv != "") {
-            this.addText("\\" + this.value, this.place - 1);
-          } else {
-            this.addText("<span class='quad'></span>", this.place -1);
-          }
+          if (this.mathenv != ""){ this.addText("\\" + this.value, this.place - 1); }
+							else { this.addText("<span class='quad'></span>", this.place -1);}
         },
 
         cmdSection: function(node) {
@@ -2257,13 +2234,8 @@ window.typejax = (function($){
           node.value = "<div id='tableofcontents'></div>";
         },
 
-        cmdTextbackslash: function() {
-          this.addText("\\", this.place - 1);
-        },
-
-        cmdTextbar: function() {
-          this.addText("|", this.place - 1);
-        },
+        cmdTextbackslash: 	function() { this.addText("\\", this.place - 1);},// Feanor: General code cleaning
+        cmdTextbar: 		function() { this.addText("|",  this.place - 1);},// Feanor: General code cleaning
 
         cmdTextbf: function(node) {
           if (node.argarray[0].childs[0]) {
@@ -2272,13 +2244,8 @@ window.typejax = (function($){
           }
         },
 
-        cmdTextgreater: function() {
-          this.addText("&gt;", this.place - 1);
-        },
-
-        cmdTextless: function() {
-          this.addText("&lt;", this.place - 1);
-        },
+        cmdTextgreater: 	function() { this.addText("&gt;", this.place - 1); }, // Feanor: General code cleaning
+        cmdTextless: 		function() { this.addText("&lt;", this.place - 1); },// Feanor: General code cleaning
 
         cmdTitle: function(node) {
           var csname = node.name, argarray = node.argarray;
@@ -2518,66 +2485,46 @@ window.typejax = (function($){
     return { latex: latex, load: load, extend: extend };
   })(typejax);
 
-  typejax.builder = function(tree, flag){
-    var open, close, html = "";
+ typejax.builder = function(tree, flag){
+    var open = ""; var close= ""; var html= ""; var editable= "";
     if (tree.reset) this.builder.reset += tree.reset;
-    if (flag) {
-      if (tree.mode == "inline") {
-        open = "<span class='" + tree.name + "'>", close = "</span>";
-        if (tree.name == "imath") {
-          open += "<span class='MathJax_Preview'>" + $.escapeText(tree.value) + "</span>";
-          open += "<script type='math/tex'>", close = "</script>" + close; 
-        }
-      } else {
-        open = "<div class='envblock " + tree.name + "'>", close = "</div>";
-        switch (tree.name) {
-          case "bmath":
-            open += "<div class='MathJax_Preview'>" + $.escapeText(tree.value) + "</div>";
-            open += "<script type='math/tex; mode=display'>", close = "</script>" + close;
-            break;
-          case "enumerate":
-            open += "<ol>", close = "</ol>" + close;
-            break;
-          case "itemize":
-            open += "<ul>", close = "</ul>" + close;
-            break;
-          case "item":
-            open = "<li>", close = "</li>";
-            break;
-        }
-      }
-    } else {
-      switch (tree.name) {
-        case "bmath":
-          open = "<div class='MathJax_Preview'>" + $.escapeText(tree.value) + "</div>";
-          open += "<script type='math/tex; mode=display'>", close = "</script>";
-          break;
-        case "enumerate":
-          open = "<div><ol>", close = "</ol></div>";
-          break;
-        case "itemize":
-          open = "<div><ul>", close = "</ul></div>";
-          break;
-        case "item":
-          open = "<li>", close = "</li>";
-          break;
-        default:
-          open = "", close = "";
-      }
-      flag = true;
-    }
-    if (tree.childs.length > 0) {
-      for (var i = 0; i < tree.childs.length; i++) {
-        html += this.builder(tree.childs[i], flag); 
-      }
-    } else {
-      html = tree.value;
-    }
-    if (tree.mode == "inline" && tree.childs.length == 0 && tree.value == "") {
-      return "";
-    } else {
-      return open + html + close;
-    }
+	if (flag) {
+		if (tree.mode == "inline") 	
+			 { open = "<span class='", close = "</span>";} 
+		else { open = "<div class='envblock ", close = "</div>";  };
+		open = open + tree.name + "'>";} 
+	if (((tree.name == "enumerate")||(tree.name == "itemize"))&&(flag==true)){open = "<div>", close = "</div>";}
+	
+	switch (tree.name) {
+		case "imath": 
+			open += "<span class='MathJax_Preview'>" + $.escapeText(tree.value) + "</span>";
+			open += "<script type='math/tex'>", close = "</script>" + close; 
+			break;
+		case "bmath":
+			open += "<div class='MathJax_Preview'>" + $.escapeText(tree.value) + "</div>";
+			open += "<script type='math/tex; mode=display'>", close = "</script>" + close;
+			break;
+		case "enumerate":
+			open += "<ol>", close = "</ol>" + close;
+			break;
+		case "itemize":
+			open += "<ul>", close = "</ul>" + close;
+			break;
+		case "item":
+			open = "<li>", close = "</li>";
+			break;
+		default:
+			if (flag==false) {open = "", close = "";}; 
+			break;
+		}
+	
+	flag = false; 
+	
+	if (tree.childs.length > 0) 
+	{   for (var i = 0; i < tree.childs.length; i++) {  html += this.builder(tree.childs[i], flag);  } } else { html = tree.value; }
+	
+	editable = "";//"<p>"+ html +" </p>";
+    if (tree.mode == "inline" && tree.childs.length == 0 && tree.value == "") { return ""; } else { return open + html + close + editable;  }
   };
 
   typejax.message = {
