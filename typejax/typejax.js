@@ -1218,6 +1218,8 @@ window.typejax = (function($){
             }
         }
       },
+	  
+	  //------------------------------------------------------------------------
       
       doEnvironment : function(node) {
         var name = node.name, same = this.getGroupSame(name);
@@ -1963,7 +1965,7 @@ window.typejax = (function($){
           name: "thmhead",
           mode: "inline",
           from: node.childs[0].from,
-          value: "<span>" + thmhead + " </span>",
+          value: "<span>"+thmhead+"</span>",
           parent: node.childs[0],
           childs: []
         };
@@ -2006,6 +2008,11 @@ window.typejax = (function($){
       }
     };
 
+	
+// ----------------------------------------------
+// Defining Latex behaviour. TODO: Place it somehow in a separate file
+// ----------------------------------------------
+	
     var latex = {
       cmdvalues : {
         documentclass: "article"
@@ -2044,6 +2051,8 @@ window.typejax = (function($){
       }
     };
 
+	
+	
     /* group.mode
      * main group could include main and block groups
      * block group cuuld include inline groups and bmath elements
@@ -2080,6 +2089,9 @@ window.typejax = (function($){
           "subsubsection*":           "section",
           "tableofcontents":          {mode: "block", args: ["[]"], outs: ["par"]},
           "textbf":                   {mode: "inline", args: ["{}"]},
+          "cite":                     {mode: "inline", args: ["{}"]},
+          "label":                    {mode: "inline", args: ["{}"]},
+          "ref":                      {mode: "inline", args: ["{}"]},
           "thanks":                   {mode: "inline", args: ["{}"]},
           "title":                    {mode: "inline", args: ["[]", "{}"]},
           "usepackage":               {mode: "inline", args: ["[]", "{}"]}
@@ -2087,6 +2099,7 @@ window.typejax = (function($){
         environment: {
           "bmath":                    {mode: "block"},
           "center":                   {mode: "main", args: ["||"], outs: ["par", "center"]},
+		  "abstract":                 {mode: "block", args: ["||"]},
           "enumerate":                {mode: "block", args: ["[]", "||"]},
           "item":                     {mode: "main", args: ["<>", "||"]},
           "itemize":                  {mode: "block", args: ["[]", "||"]},
@@ -2126,46 +2139,24 @@ window.typejax = (function($){
           }
         },
 
-        cmdHline: function() {
-          return;
+        cmdHline: function() { return; }, // Feanor: General code cleaning
+
+        cmdMaketitle: function(node) { // Feanor: General code cleaning
+          if (typeof this.cmdvalues["title"] == "undefined") return;  if (typeof this.cmdvalues["author"] == "undefined") {this.cmdvalues["author"] = "";}
+			var result = "<h1>" + this.cmdvalues["title"] + "</h1>" + "<div class='author'>" + this.cmdvalues["author"] + "</div>";
+          if (typeof this.cmdvalues["institute"] != "undefined") { result += "<div class='institute'>" + this.cmdvalues["institute"] + "</div>"; }
+          if (typeof this.cmdvalues["date"] == "undefined") 	 { result += "<div class='date'>" + (new Date()).toLocaleDateString() + "</div>";} 
+															else { result += "<div class='date'>" + this.cmdvalues["date"] + "</div>";		     }
+          if (node.name == "maketitle" && this.cmdvalues["documentclass"] == "beamer") {result = "<div class='envblock frame'>" + result + "</div>";}
+          node.childs = []; node.value = result;
         },
 
-        cmdMaketitle: function(node) {
-          if (typeof this.cmdvalues["title"] == "undefined") return;
-          var result = "<h1>" + this.cmdvalues["title"] + "</h1>";
-
-          if (typeof this.cmdvalues["author"] == "undefined") {
-            this.cmdvalues["author"] = "";
-          }
-          result += "<div class='author'>" + this.cmdvalues["author"] + "</div>";
-          if (typeof this.cmdvalues["institute"] != "undefined") {
-            result += "<div class='institute'>" + this.cmdvalues["institute"] + "</div>";
-          }
-          if (typeof this.cmdvalues["date"] == "undefined") {
-            result += "<div class='date'>" + (new Date()).toLocaleDateString() + "</div>";
-          } else {
-            result += "<div class='date'>" + this.cmdvalues["date"] + "</div>";
-          }
-
-          if (node.name == "maketitle" && this.cmdvalues["documentclass"] == "beamer") {
-            result = "<div class='envblock frame'>" + result + "</div>";
-          }
-
-          node.childs = [];
-          node.value = result;
+        cmdNewcounter: function(node) { // Feanor: General code cleaning
+          var parameters = this.readParameters(node), name = parameters[0], parent = parameters[1] || null;
+          if (name) {this.newCounter(name, parent);}
         },
 
-        cmdNewcounter: function(node) {
-          var parameters = this.readParameters(node),
-              name = parameters[0], parent = parameters[1] || null;
-          if (name) {
-            this.newCounter(name, parent);
-          }
-        },
-
-        cmdNewline: function() {
-          this.addText("<br>", this.place - 1);
-        },
+        cmdNewline: function() { this.addText("<br>", this.place - 1); },  // Feanor: General code cleaning
 
         cmdNewtheorem: function(node) {
           // \newtheorem{envname}{thmname}[numberby]
@@ -2219,19 +2210,13 @@ window.typejax = (function($){
         },
 
         cmdQquad: function() {
-          if (this.mathenv != "") {
-            this.addText("\\" + this.value, this.place - 1);
-          } else {
-            this.addText("<span class='qquad'></span>", this.place - 1);
-          }
+          if (this.mathenv != "") { this.addText("\\" + this.value, this.place - 1);} 
+							else  { this.addText("<span class='qquad'></span>", this.place - 1); }
         },
 
         cmdQuad: function() {
-          if (this.mathenv != "") {
-            this.addText("\\" + this.value, this.place - 1);
-          } else {
-            this.addText("<span class='quad'></span>", this.place -1);
-          }
+          if (this.mathenv != ""){ this.addText("\\" + this.value, this.place - 1); }
+							else { this.addText("<span class='quad'></span>", this.place -1);}
         },
 
         cmdSection: function(node) {
@@ -2252,33 +2237,35 @@ window.typejax = (function($){
           node.childs = [];
         },
 
-        cmdTableofcontents: function(node) {
-          node.childs = [];
-          node.value = "<div id='tableofcontents'></div>";
+        cmdTableofcontents: function(node) { 
+			node.childs = []; node.value = "<div id='tableofcontents'></div>";
         },
 
-        cmdTextbackslash: function() {
-          this.addText("\\", this.place - 1);
-        },
-
-        cmdTextbar: function() {
-          this.addText("|", this.place - 1);
-        },
+        cmdTextbackslash: 	function() { this.addText("\\", this.place - 1);},// Feanor: General code cleaning
+        cmdTextbar: 		function() { this.addText("|",  this.place - 1);},// Feanor: General code cleaning
 
         cmdTextbf: function(node) {
-          if (node.argarray[0].childs[0]) {
-            node.value = "<b>" + node.argarray[0].childs[0].value + "</b>";
-            node.childs = [];
-          }
+         if (node.argarray[0].childs[0]) 
+			{node.value = "<b>" + node.argarray[0].childs[0].value + "</b>"; node.childs = [];}
+       },
+	
+		cmdCite : function(node) {
+          if (node.argarray[0].childs[0]) 
+			{node.value = "[<i>" + node.argarray[0].childs[0].value + "</i>]"; node.childs = [];}
         },
 
-        cmdTextgreater: function() {
-          this.addText("&gt;", this.place - 1);
+        cmdLabel : function(node) {
+          if (node.argarray[0].childs[0]) 
+		  { node.value = "<a name=\"" + node.argarray[0].childs[0].value + "\"/>"; node.childs = []; }
         },
 
-        cmdTextless: function() {
-          this.addText("&lt;", this.place - 1);
+        cmdRef : function(node) {
+          if (node.argarray[0].childs[0]) 
+		  { node.value = "<a href=\"#" + node.argarray[0].childs[0].value + "\">^</a>"; node.childs = []; }
         },
+
+        cmdTextgreater: 	function() { this.addText("&gt;", this.place - 1); }, // Feanor: General code cleaning
+        cmdTextless: 		function() { this.addText("&lt;", this.place - 1); }, // Feanor: General code cleaning
 
         cmdTitle: function(node) {
           var csname = node.name, argarray = node.argarray;
@@ -2469,6 +2456,10 @@ window.typejax = (function($){
       list: {used: [], current: [], missing: [], existing: []}
     };
 
+// ----------------------------------------------
+// Parser
+// ----------------------------------------------
+	
     function start() {
       console.log("---------------- start parser ----------------");
       syner.analysis(input, modstart, modend);
@@ -2496,112 +2487,71 @@ window.typejax = (function($){
 
     function load(input1, modstart1, modend1, callback1) {
       input = input1; modstart = modstart1; modend = modend1; callback = callback1;
-      if (time && ((new Date).getTime() - time) > 2000) {
-        time = null;
-        return callback(null);
-      }
-      done = true;
-      var out = start();
-      if (done) {
+      if (time && ((new Date).getTime() - time) > 2000) 
+		{ time = null; return callback(null); }
+      //done = true; 
+	  var out = start();
+      //if (done) {
         callback(out);
-      }
+      //}
     }
 
-    function reload() {
-      callback(null);
-    };
-
-    function delayReload() {
-      time = (new Date).getTime();
-    }
-
+    function reload() {callback(null);};
+    function delayReload() {time = (new Date).getTime();}
     return { latex: latex, load: load, extend: extend };
   })(typejax);
 
-  typejax.builder = function(tree, flag){
-    var open, close, html = "";
+// ----------------------------------------------
+// Building "math-mode" environment from the tree
+// ----------------------------------------------
+   typejax.builder = function(tree, flag){
+    var open = ""; var close= ""; var html= ""; var editable= "";
     if (tree.reset) this.builder.reset += tree.reset;
-    if (flag) {
-      if (tree.mode == "inline") {
-        open = "<span class='" + tree.name + "'>", close = "</span>";
-        if (tree.name == "imath") {
-          open += "<span class='MathJax_Preview'>" + $.escapeText(tree.value) + "</span>";
-          open += "<script type='math/tex'>", close = "</script>" + close; 
-        }
-      } else {
-        open = "<div class='envblock " + tree.name + "'>", close = "</div>";
-        switch (tree.name) {
-          case "bmath":
-            open += "<div class='MathJax_Preview'>" + $.escapeText(tree.value) + "</div>";
-            open += "<script type='math/tex; mode=display'>", close = "</script>" + close;
-            break;
-          case "enumerate":
-            open += "<ol>", close = "</ol>" + close;
-            break;
-          case "itemize":
-            open += "<ul>", close = "</ul>" + close;
-            break;
-          case "item":
-            open = "<li>", close = "</li>";
-            break;
-        }
-      }
-    } else {
-      switch (tree.name) {
-        case "bmath":
-          open = "<div class='MathJax_Preview'>" + $.escapeText(tree.value) + "</div>";
-          open += "<script type='math/tex; mode=display'>", close = "</script>";
-          break;
-        case "enumerate":
-          open = "<div><ol>", close = "</ol></div>";
-          break;
-        case "itemize":
-          open = "<div><ul>", close = "</ul></div>";
-          break;
-        case "item":
-          open = "<li>", close = "</li>";
-          break;
-        default:
-          open = "", close = "";
-      }
-      flag = true;
-    }
-    if (tree.childs.length > 0) {
-      for (var i = 0; i < tree.childs.length; i++) {
-        html += this.builder(tree.childs[i], flag); 
-      }
-    } else {
-      html = tree.value;
-    }
-    if (tree.mode == "inline" && tree.childs.length == 0 && tree.value == "") {
-      return "";
-    } else {
-      return open + html + close;
-    }
+	if (flag) {
+		if (tree.mode == "inline") 	
+			 { open = "<span class='", close = "</span>";} 
+		else { open = "<div class='envblock ", close = "</div>";  };
+		open = open + tree.name + "'>";} 
+	if (((tree.name == "enumerate")||(tree.name == "itemize"))&&(flag==true)){open = "<div>", close = "</div>";}
+	
+	switch (tree.name) {
+		case "imath": open += "<span class='MathJax_Preview'>" + $.escapeText(tree.value) + "</span> <script type='math/tex'>"; close = "</script>" + close; 
+			break;
+		case "bmath": open += "<div class='MathJax_Preview'>" + $.escapeText(tree.value) + "</div> <script type='math/tex; mode=display'>"; close = "</script>" + close;
+			break;
+		case "enumerate": open += "<ol>", close = "</ol>" + close;
+			break;
+		case "itemize": open += "<ul>", close = "</ul>" + close;
+			break;
+		case "item": open = "<li>", close = "</li>";
+			break;
+		default: if (flag==false) {open = "", close = "";}; 
+			break;
+		}
+	
+	flag = false; 
+	if (tree.childs.length > 0) 
+		 {   for (var i = 0; i < tree.childs.length; i++) {  html += this.builder(tree.childs[i], flag);  } } 
+	else { html = tree.value; }
+	
+	//editable = "";//"<p>"+ html +" </p>";
+    if (tree.mode == "inline" && tree.childs.length == 0 && tree.value == "") { return ""; } else { return open + html + close + editable;  }
   };
 
-  typejax.message = {
-    degug: "none",
-
+// ----------------------------------------------
+// 
+// ----------------------------------------------
+  
+  typejax.message = { degug: "none",
     log: function(type) {
       var msg = Array.prototype.slice.call(arguments, 1).join(" ");
       var sto = this.storage;
       sto[type] = sto[type] ? sto[type] + "\n" + msg : msg;
       if (this.debug == "all" || this.debug.indexOf(type) > -1) console.log(msg);
     },
-
-    get: function(type) {
-      return (this.storage[type] || "");
-    },
-
-    print: function(type) {
-      console.log(this.storage[type] || "");
-    },
-
-    clear: function(type) {
-      delete this.storage[type];
-    },
-
+    get: function(type)   {  return (this.storage[type] || ""); },
+    print: function(type) { console.log(this.storage[type] || ""); },
+    clear: function(type) { delete this.storage[type]; },
     storage: {}
   };
 
