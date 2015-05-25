@@ -19,7 +19,6 @@ window.jaxedit = (function ($) {
 		hasEditor : false,
 		hasParser : false,
 		version : "0.33 lite",
-		mode : "write",
 		view : "half",
 		wcode : null,
 
@@ -72,7 +71,7 @@ window.jaxedit = (function ($) {
 		getOptions : function () {
 			var options = this.options,
 				agent = $.agent,
-				browser = "chrome",
+				browser =agent.browser,
 				version = agent.version;
 			options.localjs = (location.protocol == "file:" || location.protocol == "https:");
 
@@ -113,13 +112,6 @@ window.jaxedit = (function ($) {
 			}
 
 			mathpath = options.localjs ? "library/mathjax/unpacked/" : "http://cdn.mathjax.org/mathjax/2.1-latest/";
-			if (location.pathname.slice(0, 6) == "/note/") {
-				gatepath = "/gate/";
-				shareurl = "/note/";
-			} else {
-				gatepath = "/door/";
-				shareurl = "/beta/";
-			}
 		},
 
 		doResize : function (clientX) {
@@ -232,13 +224,7 @@ window.jaxedit = (function ($) {
 			}
 
 			lbot.innerHTML = "size: " + data.newtextsize + "; textarea: initialized";
-			scrollers.codelength = data.newtextsize;
-			scrollers.codechange = 0;
-			scrollers.codescroll = 0;
-			scrollers.showscroll = 0;
-			scrollers.showheight = 1;
-			scrollers.divheights = [];
-
+			
 			editor.setReadOnly(true);
 			this.addHooks();
 			typejax.message.debug = this.options.debug;
@@ -338,14 +324,10 @@ window.jaxedit = (function ($) {
 					codearea.scrollTop = parseInt(localStorage.getItem("scroll"));
 				}
 			}
-			if (this.mode == "write") {
-				this.showWindow();
-			}
+			this.showWindow();
 			this.loadEditor();
 			console.log("Editor Loaded");
 			showarea.innerHTML = "<div id='parser-loading'><i class='gif-loading'></i>Loading TypeJax and MathJax...</div>";
-
-			
 
 			this.loadParser();
 			console.log("Parser Loaded");
@@ -354,9 +336,7 @@ window.jaxedit = (function ($) {
 		showWindow : function () {
 			this.doResize();
 			this.childs.wrap.style.visibility = "visible";
-			if (this.mode == "write") {
-				this.addResizer();
-			}
+			this.addResizer();
 		},
 
 		addResizer : function () {
@@ -394,129 +374,7 @@ window.jaxedit = (function ($) {
 			};
 		},
 
-		doScroll : function (isForward) {
-			if (!this.autoScroll) return;
-			var scrollers = this.scrollers,
-				divheights = scrollers.divheights;
-			if (!divheights.length) return;
-			var codelength = scrollers.codelength,
-				codescroll = scrollers.codescroll,
-				codechange = scrollers.codechange,
-				showscoll = scrollers.showscroll,
-				showheight = scrollers.showheight;
-			var editor = this.editor,
-				editinfo = editor.getScrollInfo(),
-				leftpos = editinfo.top,
-				leftscroll = editinfo.height,
-				leftclient = editinfo.clientHeight,
-				leftsize = leftscroll - leftclient;
-			var showarea = this.childs.showarea,
-				rightpos = showarea.scrollTop,
-				rightscroll = showarea.scrollHeight,
-				rightclient = showarea.clientHeight,
-				rightsize = rightscroll - rightclient;
 
-			var length,
-				newpos,
-				thatpos,
-				thatarea;
-
-			function getLeftIndex() {
-				var length;
-				/* length = codelength * (leftpos / leftsize); */
-				if (leftpos <= codescroll) {
-					length = (codescroll <= 0) ? 0 : codechange * leftpos / codescroll;
-				} else {
-					length = (codescroll >= leftsize) ? codelength : codechange + (codelength - codechange) * (leftpos - codescroll) / (leftsize - codescroll)
-				}
-				return length;
-			}
-
-			function getLeftScroll(length) {
-				var newpos;
-				/* newpos = leftsize * length / codelength; */
-				if (length <= codechange) {
-					newpos = (codechange <= 0) ? 0 : codescroll * length / codechange;
-				} else {
-					newpos = (codechange >= codelength) ? leftsize : codescroll + (leftsize - codescroll) * (length - codechange) / (codelength - codechange);
-				}
-				return newpos;
-			}
-
-			function getRightIndex() {
-				var length,
-					data,
-					i;
-				var height = showheight * rightpos / rightsize;
-				for (i = 1; i < divheights.length; i++) {
-					data = divheights[i];
-					if (height > data[2]) {
-						height -= data[2];
-					} else {
-						if (data[2] > 0) {
-							length = data[0] + (data[1] - data[0]) * height / data[2];
-						} else {
-							length = data[0];
-						}
-						break;
-					}
-				}
-				return length;
-			}
-
-			function getRightScroll(length) {
-				var height = 0,
-					data,
-					i;
-				for (i = 0; i < divheights.length; i++) {
-					data = divheights[i];
-					if (length > data[1]) {
-						height += data[2];
-					} else {
-						height += data[2] * (length - data[0]) / (data[1] - data[0]);
-						break;
-					}
-				}
-				var newpos = rightsize * (height / showheight);
-				return newpos;
-			}
-
-			// leftpos <--> length <--> height <--> rightpos
-
-			if (isForward) { // left to right
-				length = getLeftIndex();
-				newpos = getRightScroll(length);
-				//console.log("left2right:", leftpos, Math.round(length), Math.round(newpos));
-				thatpos = rightpos;
-				thatarea = showarea;
-			} else { // right to left
-				length = getRightIndex();
-				newpos = getLeftScroll(length);
-				//console.log("right2left:", rightpos, Math.round(length), Math.round(newpos));
-				thatpos = leftpos;
-				thatarea = editor;
-			}
-
-			var that = this;
-			if (Math.abs(newpos - thatpos) > 10) {
-				this.autoScroll = false;
-				if (isForward) {
-					thatarea.scrollTop = newpos;
-				} else {
-					thatarea.scrollTo(0, newpos);
-				}
-				setTimeout(function () {
-					that.autoScroll = true;
-				}, 20);
-			}
-		},
-
-		setScrollers : function (length, change, scroll) {
-			var scrollers = this.scrollers;
-			scrollers.codelength = length;
-			scrollers.codechange = change;
-			scrollers.codescroll = scroll;
-		},
 
 		bindView : function () {
 			var that = this;
@@ -525,24 +383,12 @@ window.jaxedit = (function ($) {
 			code = document.getElementById("toggle-codeview"),
 			show = document.getElementById("toggle-showview");
 
-			quad.onclick = function () {
-				that.view = "quad";
-				that.doResize();
-				typejax.updater.initMode("tiny");
-			};
-			half.onclick = function () {
-				that.view = "half";
-				that.doResize();
-				typejax.updater.initMode("full");
-			};
-			code.onclick = function () {
-				that.view = "code";
-				that.doResize();
-			};
-			show.onclick = function () {
-				that.view = "show";
-				that.doResize();
-			};
+			quad.onclick = function () 
+				{that.view = "quad";that.doResize();typejax.updater.initMode("tiny"); };
+			half.onclick = function () 
+				{that.view = "half"; that.doResize();typejax.updater.initMode("full");};
+			code.onclick = function () {that.view = "code";that.doResize();};
+			show.onclick = function () {that.view = "show";that.doResize();};
 		}
 
 	}

@@ -82,7 +82,6 @@ jaxedit.doChange = function () {
 		}
 	}
 
-	jaxedit.setScrollers(newtextsize, delstart, codearea.scrollTop);
 	typejax.updater.putTask(delstart, delend, deltext, instext, newtextsize, showarea);
 };
 
@@ -110,9 +109,4 @@ jaxedit.addHandler = function () {
 	var codearea = this.childs.codearea,
 		showarea = this.childs.showarea;
 	this.editor.getWrapperElement().on("change", function (cm) { jaxedit.doChange(); });
-	showarea.onscroll = function () { jaxedit.doScroll(false); };
-	codearea.onscroll = function () {
-		if (window.localStorage) { localStorage.setItem("scroll", codearea.scrollTop); }
-		jaxedit.doScroll(true);
-	};
 };

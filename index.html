@@ -1,22 +1,19 @@
 <!DOCTYPE html>
+<!--
+* JaxEdit: online LaTeX editor with live preview	 * Copyright (c) 2011-2014 JaxEdit project	 * License: GNU Lesser General Public License, Version 3
+* Website: http://jaxedit.com	 * Source:  https://github.com/zohooo/jaxedit	 * Release: http://code.google.com/p/jaxedit/
+/-->
 <html id="view-half">
 	<head>
 		<title>JaxEdit LaTeX Editor</title>
-			<!--
-			/* JaxEdit: online LaTeX editor with live preview	 * Copyright (c) 2011-2014 JaxEdit project	 * License: GNU Lesser General Public License, Version 3
-			 * Website: http://jaxedit.com	 * Source:  https://github.com/zohooo/jaxedit	 * Release: http://code.google.com/p/jaxedit/
-			 */-->
-     
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="description" content="online LaTeX editor with live preview" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<!--[if lt IE 8]>		<script>	 alert("Your browser is too old. Please upgrade it to latest version.");  location.href = "http://ie.microsoft.com/"; </script> <![endif]-->
 		<link rel="stylesheet" type="text/css" href="library/inliner/inliner.css" />
 		<link rel="stylesheet" type="text/css" href="library/inliner/outliner.css" />
 		<link rel="stylesheet" type="text/css" href="editor/jaxedit.css" />
 	</head>
-<!-- The Body of the page --> 
 	<body>
 		<link rel=stylesheet href="library/codemirror-5.3/doc/docs.css">
 		<link rel="stylesheet" href="library/codemirror-5.3/lib/codemirror.css">
@@ -24,55 +21,38 @@
 		<script src="library/codemirror-5.3/mode/stex/stex.js"></script>
 		
 		<div id="wrap"> 
-  			<div id="head">  <!-- Header of the webpage. Here are placed menu and logo --> 
-				<input type="file" id="opensel">
-				<!-- MENUBAR BEGIN --> 
-    			<div id="menubar" class="busy">
-				</div>
+  			<div id="head">
+				<input type="file" id="opensel"><div id="menubar" class="busy"></div>
   			</div>
         
-			<!-- The Interface consists of two columns - one for the source, the other for preview --> 
-  			<div id="main">
-           
-			<!--  LEFT PANEL --> 
-    		<div id="left">
-      			<div id="ltop"><span>Source</span>  <!-- The panel upon source-pad --> 
-        				<span id="toggle-halfview" class="icon-half"></span>
-        				<span id="toggle-showview">Show</span>
-       				<span id="filename">noname.tex</span>
-      			</div>
-               <!-- The Source itself --> 
-      			<div id="source"> 
-               	<textarea id="codearea" name ="codearea"></textarea> 
-               </div>
-      			<div id="lbot"></div>
-    			</div>
+		  	<div id="main">
+			
+				<div id="left">
+					<div id="ltop"><span>Source</span>  <!-- The panel upon source-pad --> 
+							<span id="toggle-halfview" class="icon-half"></span>
+							<span id="toggle-showview">Show</span>
+						<span id="filename"></span>
+					</div>
+					<div id="source"><textarea id="codearea" name ="codearea"></textarea></div>
+					<div id="lbot"></div>
+				</div>
         
-    			<div id="resizer" title="Resize"></div>
-         <!--  RIGHT PANEL --> 
+				<div id="resizer" title="Resize"></div>
+
     			<div id="right">
-      			<div id="rtop">
+					<div id="rtop">
         				<span>Preview</span>
         				<span id="toggle-quadview" class="icon-quad"></span>
         				<span id="toggle-codeview">Code</span>
-      			</div>
-      			<div id="preview">
-        				<div id="showarea"></div>
-      			</div>
-      			<div id="rbot"></div>
+					</div>
+					<div id="preview"><div id="showarea"></div></div>
+					<div id="rbot"></div>
     			</div>
   			</div>
 		</div>
-
-<!--  OVERLAY DIALOGS --> 
-		<div id="overlay"></div>
-
-     <!-- JAVA SCRIPTS --> 
-     
-<script type="text/javascript" src="library/inliner/inliner.js"></script>
-<script type="text/javascript" src="editor/jaxedit.js"></script>
-    
-
 		
+		<script type="text/javascript" src="library/inliner/inliner.js"></script>
+		<script type="text/javascript" src="editor/jaxedit.js"></script>
+    		
 	</body>
 </html>
